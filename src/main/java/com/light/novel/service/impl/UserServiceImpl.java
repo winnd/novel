@@ -7,7 +7,6 @@ import com.light.novel.dao.UserMapper;
 import com.light.novel.enity.User;
 import com.light.novel.service.IUserService;
 import com.light.novel.util.MD5Util;
-import org.apache.catalina.Server;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -104,9 +103,34 @@ public class UserServiceImpl implements IUserService {
         
         if (resultCount>0) {            // 查到了 说明是这个用户
             String forgetToken = UUID.randomUUID().toString();
-            TokenCache.setKey("token_" + username, forgetToken);
+            TokenCache.setKey(TokenCache.TOKEN_PREFIX + username, forgetToken);
             return ServerResponse.createBySuccess(forgetToken);
         }
         return ServerResponse.createByErrorMessage("问题的答案错误");
+    }
+
+
+    public ServerResponse<String> forgetRestPassword(String username, String passwordNew, String forgetToken) {
+        if (StringUtils.isBlank(forgetToken)) {
+            return ServerResponse.createByErrorMessage("参数错误,token需要传递");
+        }
+        ServerResponse validResponse = this.checkValid(username, Const.USERNAME);
+        if (validResponse.isSuccess()) {
+            return ServerResponse.createByErrorMessage("用户不存在");
+        }
+        String token = TokenCache.getKey(TokenCache.TOKEN_PREFIX + username);
+        if (StringUtils.isBlank(token)) {
+            return ServerResponse.createByErrorMessage("token无效或者过期");
+        }
+        if (StringUtils.equals(forgetToken, token)) {
+            String md5Password = MD5Util.MD5EncodeUtf8(passwordNew);
+            int rowCount = userMapper.updatePasswordByUsername(username,md5Password);
+            if (rowCount > 0) {
+                return ServerResponse.createBySuccessMessage("修改密码成功");
+            }
+        }else{
+            return ServerResponse.createByErrorMessage("token错误,请重新获取充值密码的token");
+        }
+        return ServerResponse.createByErrorMessage("修改密码失败");
     }
 }
