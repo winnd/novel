@@ -54,7 +54,7 @@ public class UserController {
         return iUserService.checkValid(str, type);
     }
 
-    
+
     @RequestMapping(value = "get_user_info.do", method = RequestMethod.GET)
     @ResponseBody()
     public ServerResponse<User> getUserInfo(HttpSession session) {
@@ -65,7 +65,7 @@ public class UserController {
         return ServerResponse.createByErrorMessage("用户未登陆,无法获取当前用户的信息");
     }
 
-    
+
     @RequestMapping(value = "forget_get_question.do", method = RequestMethod.GET)
     @ResponseBody()
     public ServerResponse<String> forgetGetQuestion(String username) {
@@ -86,10 +86,18 @@ public class UserController {
         return iUserService.forgetRestPassword(username, passwordNew, forgetToken);
     }
 
-    
-    
+    @RequestMapping(value = "reset_password.do", method = RequestMethod.GET)
+    @ResponseBody()
+    public ServerResponse<String> resetPassword(HttpSession session, String passwordOld, String passwordNew) {
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if (user == null) {
+            return ServerResponse.createByErrorMessage("用户未登陆");
+        }
+        return iUserService.resetPasswored(passwordOld, passwordNew,user);
+    }
+
     @RequestMapping(value = "aa.do", method = RequestMethod.POST)
     public String aa() {
-        return "aa";
+        return "aa"; 
     }
 }
